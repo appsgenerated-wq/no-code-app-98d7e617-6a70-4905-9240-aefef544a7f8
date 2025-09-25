@@ -1,0 +1,41 @@
+name: RecipeVerse
+description: A platform for sharing and discovering amazing recipes.
+
+features:
+  authentication:
+    user_entity: User
+    jwt_secret: env(JWT_SECRET)
+
+entities:
+  User:
+    authenticable: true
+    properties:
+      name: string(required=true)
+      email: string(required=true, unique=true)
+    access_policies:
+      - role: User
+        permissions: [read, update]
+        condition: "user.id === id" # Users can only read and update their own profile
+      - role: Anonymous
+        permissions: [] # Anonymous users cannot access user profiles
+
+  Recipe:
+    properties:
+      title: string(required=true)
+      description: text
+      ingredients: array(string)
+      instructions: text
+      cookTime: number # Time in minutes
+      imageUrl: file
+    relationships:
+      - type: belongsTo
+        entity: User
+        as: author
+    access_policies:
+      - role: User # Any authenticated user can create a recipe
+        permissions: [create]
+      - role: User
+        permissions: [update, delete]
+        condition: "user.id === author.id" # Only the author can update or delete their recipe
+      - role: All # Includes Anonymous and User roles
+        permissions: [read] # Anyone can read recipes
